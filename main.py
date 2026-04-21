@@ -4,6 +4,9 @@ import os
 import time
 from typing import Dict, List, Any
 
+import dotenv
+dotenv.load_dotenv(override=True)
+
 from engine.runner import BenchmarkRunner
 from engine.retrieval_eval import RetrievalEvaluator
 from engine.llm_judge import LLMJudge
@@ -141,7 +144,7 @@ async def run_benchmark_with_results(agent_version: str):
 
     agent = MainAgent(version=agent_version)
     evaluator = RetrievalEvaluator()
-    judge = LLMJudge(simulation_mode=True)  # Dung simulation mode de khong can API key
+    judge = LLMJudge()  # Tu dong dung API key tu .env neu co
     runner = BenchmarkRunner(agent, evaluator, judge)
     results = await runner.run_all(dataset)
 

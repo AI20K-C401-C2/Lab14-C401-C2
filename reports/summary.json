@@ -2,13 +2,13 @@
   "metadata": {
     "version": "v2",
     "total": 55,
-    "timestamp": "2026-04-21 16:04:58"
+    "timestamp": "2026-04-21 16:44:03"
   },
   "metrics": {
-    "avg_score": 2.918181818181818,
-    "hit_rate": 0.4,
-    "agreement_rate": 0.9045454545454545,
-    "avg_latency": 0.11017835636580871,
-    "pass_rate": 0.6545454545454545
+    "avg_score": 2.036363636363636,
+    "hit_rate": 0.36363636363636365,
+    "agreement_rate": 0.8909090909090909,
+    "avg_latency": 0.10780255090916895,
+    "pass_rate": 0.21818181818181817
   }
 }
