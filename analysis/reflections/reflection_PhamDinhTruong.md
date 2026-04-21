@@ -1,4 +1,4 @@
-# Reflection - Phạm Đình Trường - [MSSV]
+# Reflection - Phạm Đình Trường - 2A202600255
 
 ## 1. Đóng góp cụ thể
 
