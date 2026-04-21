@@ -1,0 +1,14 @@
+{
+  "metadata": {
+    "version": "v2",
+    "total": 55,
+    "timestamp": "2026-04-21 16:04:58"
+  },
+  "metrics": {
+    "avg_score": 2.918181818181818,
+    "hit_rate": 0.4,
+    "agreement_rate": 0.9045454545454545,
+    "avg_latency": 0.11017835636580871,
+    "pass_rate": 0.6545454545454545
+  }
+}

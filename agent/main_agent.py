@@ -1,18 +1,9 @@
-"""
-agent/main_agent.py
-Người phụ trách:
-  - Người 6 (Phạm Việt Hoàng): Class MainAgent(version), V1 vs V2
-  - Người 5 (Phạm Đình Trường): Nâng cấp hàm _retrieve trả về retrieved_ids
-"""
+
 
 import asyncio
 import random
 from typing import List, Dict, Tuple
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Knowledge Base giả lập (Người 4 sẽ cung cấp bản thật từ synthetic_gen.py)
-# Người 5 dùng bản này để test retrieval simulation.
-# ─────────────────────────────────────────────────────────────────────────────
 KNOWLEDGE_BASE = {
     "doc_001": "Hướng dẫn đổi mật khẩu: Vào Cài đặt > Bảo mật > Đổi mật khẩu. Nhập mật khẩu cũ và mật khẩu mới.",
     "doc_002": "Chính sách hoàn tiền: Khách hàng được hoàn tiền trong vòng 30 ngày kể từ ngày mua hàng.",
@@ -31,113 +22,70 @@ KNOWLEDGE_BASE = {
     "doc_015": "Lịch sử giao dịch: Xem tại mục Tài khoản > Lịch sử giao dịch. Có thể lọc theo ngày và loại giao dịch.",
 }
 
-# Danh sách tất cả doc_ids để giả lập retrieval
 ALL_DOC_IDS = list(KNOWLEDGE_BASE.keys())
 
 
 class MainAgent:
-    """
-    Agent hỗ trợ khách hàng với RAG pipeline.
-
-    Người 6 (Phạm Việt Hoàng): Tạo V1/V2, Release Gate.
-    Người 5 (Phạm Đình Trường): Nâng cấp _retrieve để trả về retrieved_ids
-                                 (bắt buộc cho Retrieval Evaluation).
-    """
 
     def __init__(self, version: str = "v1"):
         self.version = version
         self.name = f"SupportAgent-{version}"
 
         if version == "v2":
-            # V2: Tốt hơn — ít bị bỏ sót tài liệu hơn
             self.system_prompt = (
                 "Bạn là trợ lý hỗ trợ khách hàng chuyên nghiệp. "
-                "CHỈ trả lời dựa trên context được cung cấp. "
+                "CHỈ trả lờii dựa trên context được cung cấp. "
                 "Nếu không có thông tin, hãy nói thật thay vì đoán."
             )
-            self.retrieval_noise = 0.1   # 10% miss rate → tốt hơn V1
-            self.top_k = 5               # Lấy nhiều tài liệu hơn
+            self.retrieval_noise = 0.1
+            self.top_k = 5
         else:
-            # V1: Cơ bản — dễ bỏ sót tài liệu
             self.system_prompt = "Bạn là trợ lý hỗ trợ khách hàng."
-            self.retrieval_noise = 0.3   # 30% miss rate
-            self.top_k = 3               # Lấy ít tài liệu hơn
+            self.retrieval_noise = 0.3
+            self.top_k = 3
 
-    # ─────────────────────────────────────────────
-    # NGƯỜI 5 PHỤ TRÁCH: Nâng cấp _retrieve
-    # ─────────────────────────────────────────────
     def _retrieve(self, question: str) -> Tuple[List[str], List[str]]:
-        """
-        Giả lập bước Retrieval: tìm tài liệu liên quan đến câu hỏi.
 
-        - V2 ít bỏ sót hơn V1 (retrieval_noise thấp hơn).
-        - Trả về (retrieved_ids, contexts) — retrieved_ids QUAN TRỌNG cho Retrieval Eval.
-
-        Logic:
-          1. Tính keyword overlap giữa câu hỏi và từng tài liệu.
-          2. Lấy top_k tài liệu có overlap cao nhất.
-          3. Với xác suất retrieval_noise, bỏ sót 1 tài liệu (giả lập lỗi).
-        """
         question_words = set(question.lower().split())
 
-        # Tính điểm overlap từ khóa
         scores = {}
         for doc_id, content in KNOWLEDGE_BASE.items():
             doc_words = set(content.lower().split())
             overlap = len(question_words & doc_words)
             scores[doc_id] = overlap
 
-        # Sắp xếp theo điểm overlap, lấy top_k
         sorted_docs = sorted(scores.items(), key=lambda x: x[1], reverse=True)
         top_docs = sorted_docs[: self.top_k]
 
         retrieved_ids = [doc_id for doc_id, _ in top_docs]
         contexts = [KNOWLEDGE_BASE[doc_id] for doc_id in retrieved_ids]
 
-        # Giả lập lỗi retrieval theo retrieval_noise
         if retrieved_ids and random.random() < self.retrieval_noise:
-            # Bỏ sót tài liệu đầu tiên (tài liệu quan trọng nhất)
             retrieved_ids = retrieved_ids[1:]
             contexts = contexts[1:]
 
         return retrieved_ids, contexts
 
     def _generate(self, question: str, contexts: List[str]) -> str:
-        """
-        Giả lập bước Generation: sinh câu trả lời từ context.
-        (Thực tế sẽ gọi LLM như GPT-4o, Claude...)
-        """
         if not contexts:
             return f"Xin lỗi, tôi không tìm thấy thông tin liên quan đến câu hỏi của bạn."
 
-        # Lấy context đầu tiên (đơn giản nhất)
         main_context = contexts[0]
 
         if self.version == "v2":
-            # V2: Trả lời chi tiết hơn, bám sát context hơn
             return (
                 f"Dựa trên tài liệu hệ thống: {main_context} "
                 f"Nếu bạn cần thêm thông tin về '{question}', vui lòng liên hệ hỗ trợ."
             )
         else:
-            # V1: Trả lời đơn giản hơn
-            return f"Câu trả lời: {main_context}"
+            return f"Câu trả lờii: {main_context}"
 
     async def query(self, question: str) -> Dict:
-        """
-        Pipeline RAG đầy đủ:
-          1. _retrieve: tìm tài liệu liên quan
-          2. _generate: sinh câu trả lời
-
-        Returns dict với đầy đủ thông tin cho RetrievalEvaluator.score()
-        """
-        # Giả lập độ trễ mạng / LLM call
+   
         await asyncio.sleep(0.1)
 
-        # 1. Retrieval
         retrieved_ids, contexts = self._retrieve(question)
 
-        # 2. Generation
         answer = self._generate(question, contexts)
 
         return {
@@ -146,16 +94,13 @@ class MainAgent:
             "metadata": {
                 "model": "gpt-4o-mini" if self.version == "v2" else "gpt-3.5-turbo",
                 "tokens_used": len(answer.split()),
-                "retrieved_ids": retrieved_ids,   # ← QUAN TRỌNG cho Retrieval Eval
+                "retrieved_ids": retrieved_ids,   
                 "sources": retrieved_ids,
                 "version": self.version,
             },
         }
 
 
-# ─────────────────────────────────────────────
-# Test nhanh khi chạy trực tiếp
-# ─────────────────────────────────────────────
 if __name__ == "__main__":
     async def test():
         print("=== Test Agent V1 ===")
